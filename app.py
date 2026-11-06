@@ -126,6 +126,12 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
+    
+    .gallery-image {
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin: 1em 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -198,7 +204,7 @@ def formatear_versos(contenido):
 
 
 # ═══════════════════════════════════════════════════════
-# FUNCIONES DE GALERÍA
+# FUNCIÓN DE GALERÍA
 # ═══════════════════════════════════════════════════════
 
 def mostrar_galeria():
@@ -209,29 +215,35 @@ def mostrar_galeria():
     # URL base del repositorio
     url_base = "https://raw.githubusercontent.com/faustotoasaro-source/prismas-liricos/main/"
     
-    # === PORTADA ===
+    # ═══════════════════════════════════════════════════
+    # PORTADA
+    # ═══════════════════════════════════════════════════
     st.markdown("### 📖 Portada del Libro")
     try:
         st.image(f"{url_base}Portada.jpg", 
                  caption="Prismas Líricos - Segunda Edición (1996)", 
                  use_column_width=True)
     except:
-        st.warning("📷 Portada no disponible")
+        st.warning("📷 Portada no disponible. Verifica que el archivo 'Portada.jpg' esté en GitHub.")
     
     st.markdown("---")
     
-    # === CONTRAPORTADA ===
+    # ═══════════════════════════════════════════════════
+    # CONTRAPORTADA
+    # ═══════════════════════════════════════════════════
     st.markdown("### 📖 Contraportada")
     try:
         st.image(f"{url_base}Contra%20portada.jpg", 
                  caption="Contraportada del libro", 
                  use_column_width=True)
     except:
-        st.warning("📷 Contraportada no disponible")
+        st.warning("📷 Contraportada no disponible. Verifica que el archivo 'Contra portada.jpg' esté en GitHub.")
     
     st.markdown("---")
     
-    # === FOTOS FAMILIARES ===
+    # ═══════════════════════════════════════════════════
+    # FOTOS FAMILIARES - PRIMERA FILA
+    # ═══════════════════════════════════════════════════
     st.markdown("### 👨‍👩‍👧‍👦 Recuerdos Familiares")
     
     col1, col2 = st.columns(2)
@@ -239,50 +251,63 @@ def mostrar_galeria():
     with col1:
         try:
             st.image(f"{url_base}Familia1.jpg", 
-                     caption="Recuerdo familiar 1", 
+                     caption="Recuerdo familiar 1",
                      use_column_width=True)
         except:
-            st.info("📷 Foto no disponible")
+            st.info("📷 Familia1.jpg no disponible")
     
     with col2:
         try:
             st.image(f"{url_base}Familia2.jpg", 
-                     caption="Recuerdo familiar 2", 
+                     caption="Recuerdo familiar 2",
                      use_column_width=True)
         except:
-            st.info("📷 Foto no disponible")
+            st.info("📷 Familia2.jpg no disponible")
     
     st.markdown("---")
     
-    # === MÁS FOTOS FAMILIARES ===
+    # ═══════════════════════════════════════════════════
+    # FOTOS FAMILIARES - SEGUNDA FILA
+    # ═══════════════════════════════════════════════════
     st.markdown("### 📸 Más Recuerdos")
     
     col1, col2, col3 = st.columns(3)
     
-    fotos_extra = [
-        ("Familia%203.jpg", "Recuerdo 3"),
-        ("Familia%204.jpg", "Recuerdo 4"),
-        ("Familia%205.jpg", "Recuerdo 5"),
-    ]
+    with col1:
+        try:
+            st.image(f"{url_base}Familia%203.jpg", 
+                     caption="Recuerdo 3",
+                     use_column_width=True)
+        except:
+            st.info("📷 Familia 3.jpg no disponible")
     
-    for i, (archivo, descripcion) in enumerate(fotos_extra):
-        with [col1, col2, col3][i]:
-            try:
-                st.image(f"{url_base}{archivo}", 
-                         caption=descripcion, 
-                         use_column_width=True)
-            except:
-                st.caption(f"📷 {descripcion}")
+    with col2:
+        try:
+            st.image(f"{url_base}Familia%204.jpg", 
+                     caption="Recuerdo 4",
+                     use_column_width=True)
+        except:
+            st.info("📷 Familia 4.jpg no disponible")
+    
+    with col3:
+        try:
+            st.image(f"{url_base}Familia%205.jpg", 
+                     caption="Recuerdo 5",
+                     use_column_width=True)
+        except:
+            st.info("📷 Familia 5.jpg no disponible")
     
     st.markdown("---")
     
-    # === FAMILIA 6 ===
+    # ═══════════════════════════════════════════════════
+    # FAMILIA 6
+    # ═══════════════════════════════════════════════════
     try:
         st.image(f"{url_base}Familia%206.jpg", 
-                 caption="Recuerdo familiar 6", 
+                 caption="Recuerdo familiar 6",
                  use_column_width=True)
     except:
-        st.info("📷 Foto no disponible")
+        st.info("📷 Familia 6.jpg no disponible")
     
     st.markdown("---")
     st.markdown("*Homenaje a Victoria Rodríguez de Guerra (1939-1991)*")
