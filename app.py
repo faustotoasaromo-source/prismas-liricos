@@ -304,64 +304,6 @@ def mostrar_galeria():
 
 
 # ═══════════════════════════════════════════════════════
-# FUNCIÓN DE MÚSICA - CONCIERTO DE ARANJUEZ (IDs ACTUALIZADOS)
-# ═══════════════════════════════════════════════════════
-
-def mostrar_musica():
-    """Muestra la sección de música de fondo (Concierto de Aranjuez)."""
-    st.markdown("## 🎵 Música de Fondo")
-    st.markdown("---")
-    
-    st.markdown("""
-    ### 🎸 Concierto de Aranjuez - 2. Adagio (Joaquín Rodrigo)
-    
-    Esta hermosa pieza de guitarra clásica acompaña la lectura de los poemas, 
-    evocando la nostalgia, el amor y la eternidad presentes en *Prismas Líricos*.
-    
-    *💡 Tip: Haz clic en "Play" para escuchar la música mientras exploras el libro.*
-    """)
-    
-    st.markdown("---")
-    
-    # VIDEO 1: Concierto de Aranjuez - Guitarra Clásica
-    st.markdown("### 🎸 Versión 1: Guitarra Clásica")
-    video_id_1 = "x2KRpRMSu4g"
-    
-    youtube_html_1 = f"""
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                src="https://www.youtube.com/embed/{video_id_1}?rel=0&modestbranding=1" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-        </iframe>
-    </div>
-    """
-    st.components.v1.html(youtube_html_1, height=400)
-    
-    st.markdown("---")
-    
-    # VIDEO 2: Concierto de Aranjuez - Orquesta Sinfónica
-    st.markdown("### 🎻 Versión 2: Orquesta Sinfónica")
-    video_id_2 = "3JZ_D3ELwOQ"
-    
-    youtube_html_2 = f"""
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                src="https://www.youtube.com/embed/{video_id_2}?rel=0&modestbranding=1" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-        </iframe>
-    </div>
-    """
-    st.components.v1.html(youtube_html_2, height=400)
-    
-    st.markdown("---")
-    st.markdown("*\"La música es el lenguaje del espíritu. Abre el secreto de la vida, trayendo paz, abolida la discordia.\" - Kahlil Gibran*")
-
-
-# ═══════════════════════════════════════════════════════
 # FUNCIONES DE VISUALIZACIÓN
 # ═══════════════════════════════════════════════════════
 
@@ -657,7 +599,7 @@ def main():
         
         modo = st.radio(
             "¿Cómo deseas explorar?",
-            ["🏠 Inicio", "🔍 Buscar", "📚 Por Sección", "🏷️ Por Tema", "📜 Todos los poemas", "📊 Estadísticas", "📸 Galería", "🎵 Música"],
+            ["🏠 Inicio", "🔍 Buscar", "📚 Por Sección", "🏷️ Por Tema", "📜 Todos los poemas", "📊 Estadísticas", "📸 Galería"],
             index=0
         )
         
@@ -724,9 +666,6 @@ def main():
     
     elif modo == "📸 Galería":
         mostrar_galeria()
-    
-    elif modo == "🎵 Música":
-        mostrar_musica()
 
 
 if __name__ == "__main__":
