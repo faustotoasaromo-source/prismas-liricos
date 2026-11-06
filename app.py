@@ -304,7 +304,7 @@ def mostrar_galeria():
 
 
 # ═══════════════════════════════════════════════════════
-# FUNCIÓN DE MÚSICA - CONCIERTO DE ARANJUEZ
+# FUNCIÓN DE MÚSICA - CONCIERTO DE ARANJUEZ (IDs ACTUALIZADOS)
 # ═══════════════════════════════════════════════════════
 
 def mostrar_musica():
@@ -323,9 +323,9 @@ def mostrar_musica():
     
     st.markdown("---")
     
-    # VIDEO 1: Narciso Yepes - Guitarra Clásica
-    st.markdown("### 🎸 Versión 1: Narciso Yepes (Guitarra Clásica)")
-    video_id_1 = "nU41y0vBxrw"
+    # VIDEO 1: Concierto de Aranjuez - Guitarra Clásica
+    st.markdown("### 🎸 Versión 1: Guitarra Clásica")
+    video_id_1 = "x2KRpRMSu4g"
     
     youtube_html_1 = f"""
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -341,9 +341,9 @@ def mostrar_musica():
     
     st.markdown("---")
     
-    # VIDEO 2: Versión Orquestal
+    # VIDEO 2: Concierto de Aranjuez - Orquesta Sinfónica
     st.markdown("### 🎻 Versión 2: Orquesta Sinfónica")
-    video_id_2 = "grjm07D-KQo"
+    video_id_2 = "3JZ_D3ELwOQ"
     
     youtube_html_2 = f"""
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
