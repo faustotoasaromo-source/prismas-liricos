@@ -323,9 +323,9 @@ def mostrar_musica():
     
     st.markdown("---")
     
-    # VIDEO 1: Guitarra Clásica
-    st.markdown("### 🎸 Versión 1: Guitarra Clásica")
-    video_id_1 = "jNQXAC9IVRw"
+    # VIDEO 1: Narciso Yepes - Guitarra Clásica
+    st.markdown("### 🎸 Versión 1: Narciso Yepes (Guitarra Clásica)")
+    video_id_1 = "nU41y0vBxrw"
     
     youtube_html_1 = f"""
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -341,9 +341,9 @@ def mostrar_musica():
     
     st.markdown("---")
     
-    # VIDEO 2: Orquesta Sinfónica
+    # VIDEO 2: Versión Orquestal
     st.markdown("### 🎻 Versión 2: Orquesta Sinfónica")
-    video_id_2 = "5qap5aO4i9A"
+    video_id_2 = "grjm07D-KQo"
     
     youtube_html_2 = f"""
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
