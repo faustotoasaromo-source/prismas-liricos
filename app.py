@@ -204,7 +204,7 @@ def formatear_versos(contenido):
 
 
 # ═══════════════════════════════════════════════════════
-# FUNCIÓN DE GALERÍA
+# FUNCIÓN DE GALERÍA (CORREGIDA CON EL USUARIO REAL)
 # ═══════════════════════════════════════════════════════
 
 def mostrar_galeria():
@@ -212,8 +212,8 @@ def mostrar_galeria():
     st.markdown("## 📸 Galería de Recuerdos")
     st.markdown("---")
     
-    # URL base del repositorio
-    url_base = "https://raw.githubusercontent.com/faustotoasaro-source/prismas-liricos/main/"
+    # URL base del repositorio (CORREGIDO: faustotoasaromo-source)
+    url_base = "https://raw.githubusercontent.com/faustotoasaromo-source/prismas-liricos/main/"
     
     # ═══════════════════════════════════════════════════
     # PORTADA
@@ -224,7 +224,7 @@ def mostrar_galeria():
                  caption="Prismas Líricos - Segunda Edición (1996)", 
                  use_column_width=True)
     except:
-        st.warning("📷 Portada no disponible. Verifica que el archivo 'Portada.jpg' esté en GitHub.")
+        st.warning("📷 Portada no disponible. Verifica el nombre del archivo en GitHub.")
     
     st.markdown("---")
     
@@ -237,7 +237,7 @@ def mostrar_galeria():
                  caption="Contraportada del libro", 
                  use_column_width=True)
     except:
-        st.warning("📷 Contraportada no disponible. Verifica que el archivo 'Contra portada.jpg' esté en GitHub.")
+        st.warning("📷 Contraportada no disponible. Verifica el nombre del archivo en GitHub.")
     
     st.markdown("---")
     
