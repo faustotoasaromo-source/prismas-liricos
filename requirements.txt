@@ -1,0 +1,5 @@
+streamlit
+edge-tts
+pandas
+fpdf2
+requests
