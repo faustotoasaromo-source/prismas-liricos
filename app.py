@@ -607,7 +607,7 @@ def mostrar_estadisticas(libro):
     # Gráfico de barras con Streamlit
     import pandas as pd
     df = pd.DataFrame(temas_top, columns=['Tema', 'Frecuencia'])
-    st.bar_chart(df.set_index('Tema')) 
+    st.bar_chart(df.set_index('Tema'))
     
     st.markdown("### 📅 Distribución por Año")
     años_ordenados = {k: v for k, v in sorted(años.items()) if k.isdigit()}
