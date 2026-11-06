@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ╔════════════════════════════════════════════════════════════════╗
-║   PRISMAS LÍRICOS - Aplicación Web con Formato de Versos     ║
+║   PRISMAS LÍRICOS - Aplicación Web Completa                   ║
 ║   Jesús Ignacio Guerra Figueroa                               ║
 ╚════════════════════════════════════════════════════════════════╝
 """
@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS personalizado con formato de versos
+# CSS personalizado
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=EB+Garamond:ital@0;1&display=swap');
@@ -91,13 +91,6 @@ st.markdown("""
         max-width: 800px;
     }
     
-    .verse-line {
-        display: block;
-        margin: 0.3em 0;
-        text-indent: -2em;
-        padding-left: 2em;
-    }
-    
     .audio-container {
         background: #f0e6d2;
         padding: 1.5em;
@@ -133,29 +126,13 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    
-    .sidebar-text {
-        font-family: 'EB Garamond', serif;
-        color: #4a2c17;
-    }
-    
-    /* Formato especial para versos centrados */
-    .centered-verse {
-        text-align: center;
-        font-style: italic;
-    }
-    
-    /* Separador entre estrofas */
-    .stanza-break {
-        height: 1.5em;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════
 # FUNCIONES DE AUDIO
-# ══════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 
 @st.cache_resource
 def generar_audio_poema(texto, voz="es-ES-HelenaNeural", rate="-15%"):
@@ -163,11 +140,9 @@ def generar_audio_poema(texto, voz="es-ES-HelenaNeural", rate="-15%"):
     try:
         import edge_tts
         
-        # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
             archivo_temp = tmp_file.name
         
-        # Generar audio
         async def generar():
             communicate = edge_tts.Communicate(texto, voz, rate=rate)
             await communicate.save(archivo_temp)
@@ -183,18 +158,12 @@ def generar_audio_poema(texto, voz="es-ES-HelenaNeural", rate="-15%"):
 
 def limpiar_texto_para_audio(texto):
     """Limpia el texto para mejor pronunciación."""
-    # Eliminar símbolos decorativos pero mantener saltos de línea
     texto = re.sub(r'[*═╔╗╚╝║┌┐└┘├┤┬┴┼─│]', '', texto)
-    
-    # Reemplazar puntos suspensivos
     texto = texto.replace('...', ', ')
     texto = texto.replace('....', ', ')
-    
-    # Normalizar espacios pero mantener saltos de línea
     lineas = texto.split('\n')
     lineas_limpias = [re.sub(r'\s+', ' ', linea).strip() for linea in lineas]
     texto = '\n'.join(lineas_limpias)
-    
     return texto.strip()
 
 
@@ -219,127 +188,112 @@ def limpiar_texto(texto):
 
 
 def formatear_versos(contenido):
-    """
-    Formatea el contenido preservando los saltos de línea
-    y la estructura original de los versos como en el libro.
-    """
-    # Dividir por líneas
+    """Formatea el contenido preservando los saltos de línea."""
     lineas = contenido.strip().split('\n')
-    
-    # Filtrar líneas vacías al inicio y final
     while lineas and not lineas[0].strip():
         lineas.pop(0)
     while lineas and not lineas[-1].strip():
         lineas.pop()
-    
-    # Unir preservando saltos de línea
     return '\n'.join(lineas)
 
 
 # ═══════════════════════════════════════════════════════
-# INTERFAZ PRINCIPAL
+# FUNCIONES DE GALERÍA
 # ═══════════════════════════════════════════════════════
 
-def main():
-    # Cargar datos
-    try:
-        libro = cargar_libro()
-    except FileNotFoundError:
-        st.error("❌ No se encontró 'prismas_liricos_completo.json'")
-        st.info("Ejecuta primero: `python poemas_parte_3.py` para generar el archivo.")
-        return
+def mostrar_galeria():
+    """Muestra la galería de fotos del libro."""
+    st.markdown("## 📸 Galería de Recuerdos")
+    st.markdown("---")
     
-    # ══════════════════════════════════════════════════
-    # PORTADA
-    # ═══════════════════════════════════════════════════
-    st.markdown('<div class="main-title">PRISMAS LÍRICOS</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">Jesús Ignacio Guerra Figueroa</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="homenaje">{libro.get("homenaje", "")}</div>', unsafe_allow_html=True)
+    # URL base del repositorio
+    url_base = "https://raw.githubusercontent.com/faustotoasaro-source/prismas-liricos/main/"
+    
+    # === PORTADA ===
+    st.markdown("### 📖 Portada del Libro")
+    try:
+        st.image(f"{url_base}Portada.jpg", 
+                 caption="Prismas Líricos - Segunda Edición (1996)", 
+                 use_column_width=True)
+    except:
+        st.warning("📷 Portada no disponible")
     
     st.markdown("---")
     
-    # ═══════════════════════════════════════════════════
-    # SIDEBAR - NAVEGACIÓN Y CONFIGURACIÓN DE VOZ
-    # ═══════════════════════════════════════════════════
-    with st.sidebar:
-        st.markdown("## 📖 Navegación")
-        
-        modo = st.radio(
-            "¿Cómo deseas explorar?",
-            ["🏠 Inicio", " Buscar", "📚 Por Sección", "🏷️ Por Tema", "📜 Todos los poemas", "📊 Estadísticas"],
-            index=0
-        )
-        
-        st.markdown("---")
-        st.markdown("### 🎙️ Configuración de Voz")
-        
-        voz_seleccionada = st.selectbox(
-            "Elige una voz:",
-            [
-                "Helena (España - Femenina)",
-                "Alvaro (España - Masculina)",
-                "Elvira (España - Femenina)",
-                "Dalia (México - Femenina)",
-                "Jorge (México - Masculina)",
-                "Lupe (México - Femenina)"
-            ],
-            index=0
-        )
-        
-        # Mapear nombre a ID de voz
-        voces_map = {
-            "Helena (España - Femenina)": "es-ES-HelenaNeural",
-            "Alvaro (España - Masculina)": "es-ES-AlvaroNeural",
-            "Elvira (España - Femenina)": "es-ES-ElviraNeural",
-            "Dalia (México - Femenina)": "es-MX-DaliaNeural",
-            "Jorge (México - Masculina)": "es-MX-JorgeNeural",
-            "Lupe (México - Femenina)": "es-MX-LupeNeural",
-        }
-        
-        st.session_state.voz_id = voces_map[voz_seleccionada]
-        
-        velocidad = st.slider(
-            "Velocidad de lectura:",
-            -30, 10, -15,
-            format="%d%%",
-            help="-15% es ideal para poesía"
-        )
-        
-        st.session_state.velocidad = f"{velocidad}%"
-        
-        st.markdown("---")
-        st.markdown("### ℹ️ Información")
-        st.markdown(f"**Total de textos:** {len(libro['poemas'])}")
-        st.markdown(f"**Edición:** {libro.get('edicion', 'Segunda Edición')}")
-        st.markdown(f"**Año:** {libro.get('anio_publicacion', '1996')}")
+    # === CONTRAPORTADA ===
+    st.markdown("### 📖 Contraportada")
+    try:
+        st.image(f"{url_base}Contra%20portada.jpg", 
+                 caption="Contraportada del libro", 
+                 use_column_width=True)
+    except:
+        st.warning("📷 Contraportada no disponible")
     
-    # ═══════════════════════════════════════════════════
-    # CONTENIDO PRINCIPAL
-    # ═══════════════════════════════════════════════════
+    st.markdown("---")
     
-    if modo == "🏠 Inicio":
-        mostrar_inicio(libro)
+    # === FOTOS FAMILIARES ===
+    st.markdown("### 👨‍👩‍👧‍👦 Recuerdos Familiares")
     
-    elif modo == "🔍 Buscar":
-        mostrar_busqueda(libro)
+    col1, col2 = st.columns(2)
     
-    elif modo == "📚 Por Sección":
-        mostrar_por_seccion(libro)
+    with col1:
+        try:
+            st.image(f"{url_base}Familia1.jpg", 
+                     caption="Recuerdo familiar 1", 
+                     use_column_width=True)
+        except:
+            st.info("📷 Foto no disponible")
     
-    elif modo == "🏷️ Por Tema":
-        mostrar_por_tema(libro)
+    with col2:
+        try:
+            st.image(f"{url_base}Familia2.jpg", 
+                     caption="Recuerdo familiar 2", 
+                     use_column_width=True)
+        except:
+            st.info("📷 Foto no disponible")
     
-    elif modo == "📜 Todos los poemas":
-        mostrar_todos(libro)
+    st.markdown("---")
     
-    elif modo == "📊 Estadísticas":
-        mostrar_estadisticas(libro)
+    # === MÁS FOTOS FAMILIARES ===
+    st.markdown("### 📸 Más Recuerdos")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    fotos_extra = [
+        ("Familia%203.jpg", "Recuerdo 3"),
+        ("Familia%204.jpg", "Recuerdo 4"),
+        ("Familia%205.jpg", "Recuerdo 5"),
+    ]
+    
+    for i, (archivo, descripcion) in enumerate(fotos_extra):
+        with [col1, col2, col3][i]:
+            try:
+                st.image(f"{url_base}{archivo}", 
+                         caption=descripcion, 
+                         use_column_width=True)
+            except:
+                st.caption(f"📷 {descripcion}")
+    
+    st.markdown("---")
+    
+    # === FAMILIA 6 ===
+    try:
+        st.image(f"{url_base}Familia%206.jpg", 
+                 caption="Recuerdo familiar 6", 
+                 use_column_width=True)
+    except:
+        st.info("📷 Foto no disponible")
+    
+    st.markdown("---")
+    st.markdown("*Homenaje a Victoria Rodríguez de Guerra (1939-1991)*")
 
+
+# ═══════════════════════════════════════════════════════
+# FUNCIONES DE VISUALIZACIÓN
+# ═══════════════════════════════════════════════════════
 
 def mostrar_poema(poema):
     """Muestra un poema individual con formato de versos y audio."""
-    
-    # Formatear contenido preservando versos
     contenido_formateado = formatear_versos(poema['contenido'])
     
     st.markdown(f"""
@@ -352,13 +306,10 @@ def mostrar_poema(poema):
     </div>
     """, unsafe_allow_html=True)
     
-    # ═══════════════════════════════════════════════════
-    # SECCIÓN DE AUDIO
-    # ═══════════════════════════════════════════════════
+    # Sección de audio
     st.markdown("---")
     st.markdown("### 🎙️ Escuchar este poema")
     
-    # Preparar texto para audio
     texto_audio = f"{poema['titulo']}. "
     if poema.get('autor'):
         texto_audio += f"De {poema['autor']}. "
@@ -368,7 +319,6 @@ def mostrar_poema(poema):
     texto_audio += ". . . "
     texto_audio += limpiar_texto_para_audio(poema['contenido'])
     
-    # Botón para generar y reproducir audio
     if st.button("🔊 Generar y reproducir audio", key=f"audio_{poema['titulo']}"):
         with st.spinner("Generando audio con voz neuronal..."):
             voz_id = st.session_state.get('voz_id', 'es-ES-HelenaNeural')
@@ -378,16 +328,13 @@ def mostrar_poema(poema):
             
             if archivo_audio:
                 st.success("✅ Audio generado exitosamente")
-                
-                # Mostrar reproductor de audio
                 st.markdown('<div class="audio-container">', unsafe_allow_html=True)
                 st.audio(archivo_audio, format='audio/mp3')
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # Opción de descarga
                 with open(archivo_audio, 'rb') as f:
                     st.download_button(
-                        label=" Descargar MP3",
+                        label="💾 Descargar MP3",
                         data=f,
                         file_name=f"{poema['titulo']}.mp3",
                         mime="audio/mpeg"
@@ -414,8 +361,8 @@ def mostrar_inicio(libro):
         
         - 📖 Prosa filosófica sobre la vida, la muerte y la reencarnación
         - 🌹 Más de 200 poemas líricos
-        - 👨‍‍👧‍👦 Versos de hijos y nietos
-        -  El Álbum de Recuerdos de toda una vida de amor
+        - 👨‍👩‍👧‍👦 Versos de hijos y nietos
+        - 📜 El Álbum de Recuerdos de toda una vida de amor
         - 🕊️ La Oración Fúnebre y los Cantos finales
         """)
     
@@ -521,7 +468,6 @@ def mostrar_por_tema(libro):
     """Muestra poemas agrupados por tema."""
     st.markdown("## 🏷️ Explorar por Tema")
     
-    # Recopilar todos los temas
     temas_unicos = set()
     for poema in libro['poemas']:
         temas_unicos.update(poema.get('temas', []))
@@ -530,7 +476,6 @@ def mostrar_por_tema(libro):
     
     tema_elegido = st.selectbox("Elige un tema:", temas_ordenados)
     
-    # Filtrar poemas con ese tema
     poemas_filtrados = [
         p for p in libro['poemas']
         if tema_elegido in p.get('temas', [])
@@ -558,7 +503,6 @@ def mostrar_todos(libro):
          for p in libro['poemas']]
     )
     
-    # Buscar el poema por título
     titulo_seleccionado = poema_elegido.split(' — ')[0]
     poema = next((p for p in libro['poemas'] if p['titulo'] == titulo_seleccionado), None)
     
@@ -570,7 +514,6 @@ def mostrar_estadisticas(libro):
     """Muestra estadísticas del libro."""
     st.markdown("## 📊 Estadísticas del Libro")
     
-    # Recopilar datos
     secciones = {}
     autores = {}
     años = {}
@@ -604,7 +547,6 @@ def mostrar_estadisticas(libro):
     st.markdown("### 🏷️ Temas Más Frecuentes (Top 20)")
     temas_top = sorted(temas.items(), key=lambda x: x[1], reverse=True)[:20]
     
-    # Gráfico de barras con Streamlit
     import pandas as pd
     df = pd.DataFrame(temas_top, columns=['Tema', 'Frecuencia'])
     st.bar_chart(df.set_index('Tema'))
@@ -613,6 +555,102 @@ def mostrar_estadisticas(libro):
     años_ordenados = {k: v for k, v in sorted(años.items()) if k.isdigit()}
     df_años = pd.DataFrame(list(años_ordenados.items()), columns=['Año', 'Textos'])
     st.line_chart(df_años.set_index('Año'))
+
+
+# ═══════════════════════════════════════════════════════
+# FUNCIÓN PRINCIPAL
+# ═══════════════════════════════════════════════════════
+
+def main():
+    """Función principal de la aplicación."""
+    # Cargar datos
+    try:
+        libro = cargar_libro()
+    except FileNotFoundError:
+        st.error("❌ No se encontró 'prismas_liricos_completo.json'")
+        st.info("Asegúrate de que el archivo esté en el repositorio de GitHub.")
+        return
+    
+    # Portada
+    st.markdown('<div class="main-title">PRISMAS LÍRICOS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">Jesús Ignacio Guerra Figueroa</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="homenaje">{libro.get("homenaje", "")}</div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Sidebar
+    with st.sidebar:
+        st.markdown("## 📖 Navegación")
+        
+        modo = st.radio(
+            "¿Cómo deseas explorar?",
+            ["🏠 Inicio", "🔍 Buscar", "📚 Por Sección", "🏷️ Por Tema", "📜 Todos los poemas", "📊 Estadísticas", "📸 Galería"],
+            index=0
+        )
+        
+        st.markdown("---")
+        st.markdown("### 🎙️ Configuración de Voz")
+        
+        voz_seleccionada = st.selectbox(
+            "Elige una voz:",
+            [
+                "Helena (España - Femenina)",
+                "Alvaro (España - Masculina)",
+                "Elvira (España - Femenina)",
+                "Dalia (México - Femenina)",
+                "Jorge (México - Masculina)",
+                "Lupe (México - Femenina)"
+            ],
+            index=0
+        )
+        
+        voces_map = {
+            "Helena (España - Femenina)": "es-ES-HelenaNeural",
+            "Alvaro (España - Masculina)": "es-ES-AlvaroNeural",
+            "Elvira (España - Femenina)": "es-ES-ElviraNeural",
+            "Dalia (México - Femenina)": "es-MX-DaliaNeural",
+            "Jorge (México - Masculina)": "es-MX-JorgeNeural",
+            "Lupe (México - Femenina)": "es-MX-LupeNeural",
+        }
+        
+        st.session_state.voz_id = voces_map[voz_seleccionada]
+        
+        velocidad = st.slider(
+            "Velocidad de lectura:",
+            -30, 10, -15,
+            format="%d%%",
+            help="-15% es ideal para poesía"
+        )
+        
+        st.session_state.velocidad = f"{velocidad}%"
+        
+        st.markdown("---")
+        st.markdown("### ℹ️ Información")
+        st.markdown(f"**Total de textos:** {len(libro['poemas'])}")
+        st.markdown(f"**Edición:** {libro.get('edicion', 'Segunda Edición')}")
+        st.markdown(f"**Año:** {libro.get('anio_publicacion', '1996')}")
+    
+    # Contenido principal
+    if modo == "🏠 Inicio":
+        mostrar_inicio(libro)
+    
+    elif modo == "🔍 Buscar":
+        mostrar_busqueda(libro)
+    
+    elif modo == "📚 Por Sección":
+        mostrar_por_seccion(libro)
+    
+    elif modo == "🏷️ Por Tema":
+        mostrar_por_tema(libro)
+    
+    elif modo == "📜 Todos los poemas":
+        mostrar_todos(libro)
+    
+    elif modo == "📊 Estadísticas":
+        mostrar_estadisticas(libro)
+    
+    elif modo == "📸 Galería":
+        mostrar_galeria()
 
 
 if __name__ == "__main__":
