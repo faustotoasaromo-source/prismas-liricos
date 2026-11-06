@@ -212,12 +212,10 @@ def mostrar_galeria():
     st.markdown("## 📸 Galería de Recuerdos")
     st.markdown("---")
     
-    # URL base del repositorio (CORREGIDO: faustotoasaromo-source)
+    # URL base del repositorio
     url_base = "https://raw.githubusercontent.com/faustotoasaromo-source/prismas-liricos/main/"
     
-    # ═══════════════════════════════════════════════════
     # PORTADA
-    # ═══════════════════════════════════════════════════
     st.markdown("### 📖 Portada del Libro")
     try:
         st.image(f"{url_base}Portada.jpg", 
@@ -228,9 +226,7 @@ def mostrar_galeria():
     
     st.markdown("---")
     
-    # ═══════════════════════════════════════════════════
     # CONTRAPORTADA
-    # ═══════════════════════════════════════════════════
     st.markdown("### 📖 Contraportada")
     try:
         st.image(f"{url_base}Contra%20portada.jpg", 
@@ -241,9 +237,7 @@ def mostrar_galeria():
     
     st.markdown("---")
     
-    # ═══════════════════════════════════════════════════
     # FOTOS FAMILIARES - PRIMERA FILA
-    # ═══════════════════════════════════════════════════
     st.markdown("### 👨‍👩‍👧‍👦 Recuerdos Familiares")
     
     col1, col2 = st.columns(2)
@@ -266,9 +260,7 @@ def mostrar_galeria():
     
     st.markdown("---")
     
-    # ═══════════════════════════════════════════════════
     # FOTOS FAMILIARES - SEGUNDA FILA
-    # ═══════════════════════════════════════════════════
     st.markdown("### 📸 Más Recuerdos")
     
     col1, col2, col3 = st.columns(3)
@@ -299,9 +291,7 @@ def mostrar_galeria():
     
     st.markdown("---")
     
-    # ═══════════════════════════════════════════════════
     # FAMILIA 6
-    # ═══════════════════════════════════════════════════
     try:
         st.image(f"{url_base}Familia%206.jpg", 
                  caption="Recuerdo familiar 6",
@@ -331,22 +321,41 @@ def mostrar_musica():
     *💡 Tip: Haz clic en "Play" para escuchar la música mientras exploras el libro.*
     """)
     
-    # ID del video de YouTube (Versión clásica de guitarra)
-    video_id = "VjJ1k3Jq2gE" 
+    st.markdown("---")
     
-    # Código HTML optimizado
-    youtube_html = f"""
+    # VIDEO 1: Guitarra Clásica
+    st.markdown("### 🎸 Versión 1: Guitarra Clásica")
+    video_id_1 = "jNQXAC9IVRw"
+    
+    youtube_html_1 = f"""
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                src="https://www.youtube.com/embed/{video_id}?rel=0&modestbranding=1" 
+                src="https://www.youtube.com/embed/{video_id_1}?rel=0&modestbranding=1" 
                 frameborder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowfullscreen>
         </iframe>
     </div>
     """
+    st.components.v1.html(youtube_html_1, height=400)
     
-    st.components.v1.html(youtube_html, height=400)
+    st.markdown("---")
+    
+    # VIDEO 2: Orquesta Sinfónica
+    st.markdown("### 🎻 Versión 2: Orquesta Sinfónica")
+    video_id_2 = "5qap5aO4i9A"
+    
+    youtube_html_2 = f"""
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                src="https://www.youtube.com/embed/{video_id_2}?rel=0&modestbranding=1" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+        </iframe>
+    </div>
+    """
+    st.components.v1.html(youtube_html_2, height=400)
     
     st.markdown("---")
     st.markdown("*\"La música es el lenguaje del espíritu. Abre el secreto de la vida, trayendo paz, abolida la discordia.\" - Kahlil Gibran*")
