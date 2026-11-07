@@ -12,6 +12,7 @@ import streamlit as st
 import re
 import asyncio
 import tempfile
+from fpdf import FPDF
 
 # ═══════════════════════════════════════════════════════
 # CONFIGURACIÓN INICIAL
@@ -30,7 +31,7 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=EB+Garamond:ital@0;1&display=swap');
     
     .stApp {
-        background: linear-gradient(135deg, #f5f1e8 0%, #ebe4d4 100%);
+        background: #f5f1e8;
     }
     
     .main-title {
@@ -126,14 +127,43 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    
-    .gallery-image {
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin: 1em 0;
-    }
 </style>
 """, unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════
+# DICCIONARIO DE CANCIONES
+# ═══════════════════════════════════════════════════════
+
+CANCIONES = {
+    "Romance Anónimo - Gonza Nico": "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A1882653678&color=%238b6f47&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
+    "Concierto de Aranjuez - Adagio": "",
+    "Asturias (Leyenda) - Albéniz": "",
+    "Nocturno Op. 9 No. 2 - Chopin": "",
+    "Clair de Lune - Debussy": "",
+    "Recuerdos de la Alhambra - Tárrega": "",
+}
+
+
+# ═══════════════════════════════════════════════════════
+# REPRODUCTOR FLOTANTE
+# ═══════════════════════════════════════════════════════
+
+def reproductor_flotante():
+    """Reproductor de música flotante en la esquina inferior derecha."""
+    cancion_url = st.session_state.get('cancion_url', CANCIONES["Romance Anónimo - Gonza Nico"])
+    
+    html_flotante = f"""
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 999; 
+                background: rgba(255, 253, 247, 0.97); padding: 10px; 
+                border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                border: 2px solid #8b6f47;">
+        <iframe width="300" height="80" scrolling="no" frameborder="no" 
+                allow="autoplay" src="{cancion_url}">
+        </iframe>
+    </div>
+    """
+    st.components.v1.html(html_flotante, height=0)
 
 
 # ═══════════════════════════════════════════════════════
@@ -171,6 +201,118 @@ def limpiar_texto_para_audio(texto):
     lineas_limpias = [re.sub(r'\s+', ' ', linea).strip() for linea in lineas]
     texto = '\n'.join(lineas_limpias)
     return texto.strip()
+
+
+# ═══════════════════════════════════════════════════════
+# FUNCIÓN PARA LIMPIAR CARACTERES EN PDF
+# ═══════════════════════════════════════════════════════
+
+def limpiar_caracteres(texto):
+    """Reemplaza caracteres Unicode problemáticos con equivalentes ASCII."""
+    reemplazos = {
+        '\u2014': '-', '\u2013': '-', '\u2018': "'", '\u2019': "'",
+        '\u201c': '"', '\u201d': '"', '\u2026': '...', '\u00a0': ' ',
+        '\u2022': '*', '\u2021': '+', '\u00b0': 'o',
+        '\u00e1': 'a', '\u00e9': 'e', '\u00ed': 'i', '\u00f3': 'o',
+        '\u00fa': 'u', '\u00f1': 'n', '\u00c1': 'A', '\u00c9': 'E',
+        '\u00cd': 'I', '\u00d3': 'O', '\u00da': 'U', '\u00d1': 'N',
+    }
+    for char, replacement in reemplazos.items():
+        texto = texto.replace(char, replacement)
+    return texto
+
+
+# ═══════════════════════════════════════════════════════
+# FUNCIÓN PARA GENERAR PDF DE UN POEMA
+# ═══════════════════════════════════════════════════════
+
+def generar_pdf_poema(poema):
+    """Genera un PDF con el formato visual exacto del libro."""
+    
+    class PDFPoema(FPDF):
+        def header(self):
+            self.set_font('Times', 'I', 9)
+            self.set_text_color(120, 120, 120)
+            self.cell(0, 10, 'Prismas Líricos - Jesús Ignacio Guerra Figueroa', 0, 1, 'C')
+            self.ln(5)
+        
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Times', 'I', 9)
+            self.set_text_color(150, 150, 150)
+            self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+    
+    pdf = PDFPoema()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=25)
+    
+    pdf.ln(20)
+    pdf.set_font('Times', 'B', 18)
+    pdf.set_text_color(40, 40, 40)
+    titulo = limpiar_caracteres(poema['titulo'].strip().upper())
+    pdf.multi_cell(0, 10, titulo, 0, 'C')
+    pdf.ln(5)
+    
+    pdf.set_font('Times', 'I', 11)
+    pdf.set_text_color(100, 100, 100)
+    autor = limpiar_caracteres(poema.get('autor', 'Jesús Ignacio Guerra Figueroa').strip())
+    año = limpiar_caracteres(poema.get('año', '').strip())
+    
+    if año:
+        pdf.cell(0, 8, f'{autor} - {año}', 0, 1, 'C')
+    else:
+        pdf.cell(0, 8, autor, 0, 1, 'C')
+    
+    pdf.ln(15)
+    
+    pdf.set_draw_color(180, 180, 180)
+    pdf.set_line_width(0.3)
+    x_center = 105
+    pdf.line(x_center - 40, pdf.get_y(), x_center + 40, pdf.get_y())
+    pdf.ln(15)
+    
+    pdf.set_font('Times', '', 12)
+    pdf.set_text_color(30, 30, 30)
+    
+    lineas = poema['contenido'].strip().split('\n')
+    
+    while lineas and not lineas[0].strip():
+        lineas.pop(0)
+    while lineas and not lineas[-1].strip():
+        lineas.pop()
+    
+    for linea in lineas:
+        linea_limpia = limpiar_caracteres(linea.strip())
+        
+        if not linea_limpia:
+            pdf.ln(8)
+        else:
+            espacios_iniciales = len(linea) - len(linea.lstrip())
+            
+            if espacios_iniciales > 0:
+                indentacion = min(espacios_iniciales * 1.5, 35)
+                pdf.set_x(30 + indentacion)
+                pdf.multi_cell(150, 7, linea_limpia, 0, 'L')
+            else:
+                pdf.multi_cell(0, 7, linea_limpia, 0, 'C')
+            
+            pdf.ln(1)
+    
+    pdf.ln(15)
+    pdf.set_draw_color(180, 180, 180)
+    pdf.line(x_center - 40, pdf.get_y(), x_center + 40, pdf.get_y())
+    pdf.ln(8)
+    
+    pdf.set_font('Times', 'I', 9)
+    pdf.set_text_color(120, 120, 120)
+    pdf.cell(0, 6, 'Homenaje a Victoria Rodríguez de Guerra (1939-1991)', 0, 1, 'C')
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+        archivo_pdf = tmp_file.name
+    
+    pdf.output(archivo_pdf)
+    
+    return archivo_pdf
 
 
 # ═══════════════════════════════════════════════════════
@@ -212,95 +354,206 @@ def mostrar_galeria():
     st.markdown("## 📸 Galería de Recuerdos")
     st.markdown("---")
     
-    # URL base del repositorio
     url_base = "https://raw.githubusercontent.com/faustotoasaromo-source/prismas-liricos/main/"
     
-    # PORTADA
     st.markdown("### 📖 Portada del Libro")
     try:
-        st.image(f"{url_base}Portada.jpg", 
-                 caption="Prismas Líricos - Segunda Edición (1996)", 
-                 use_column_width=True)
+        st.image(f"{url_base}Portada.jpg", caption="Prismas Líricos - Segunda Edición (1996)", width=400)
     except:
-        st.warning("📷 Portada no disponible. Verifica el nombre del archivo en GitHub.")
+        st.warning("📷 Portada no disponible.")
     
     st.markdown("---")
     
-    # CONTRAPORTADA
     st.markdown("### 📖 Contraportada")
     try:
-        st.image(f"{url_base}Contra%20portada.jpg", 
-                 caption="Contraportada del libro", 
-                 use_column_width=True)
+        st.image(f"{url_base}Contra%20portada.jpg", caption="Contraportada del libro", width=400)
     except:
-        st.warning("📷 Contraportada no disponible. Verifica el nombre del archivo en GitHub.")
+        st.warning("📷 Contraportada no disponible.")
     
     st.markdown("---")
     
-    # FOTOS FAMILIARES - PRIMERA FILA
     st.markdown("### 👨‍👩‍👧‍👦 Recuerdos Familiares")
+    col1, col2 = st.columns(2)
+    with col1:
+        try: st.image(f"{url_base}Familia1.jpg", caption="Recuerdo familiar 1", width=350)
+        except: st.info("📷 Familia1.jpg no disponible")
+    with col2:
+        try: st.image(f"{url_base}Familia2.jpg", caption="Recuerdo familiar 2", width=350)
+        except: st.info("📷 Familia2.jpg no disponible")
+    
+    st.markdown("---")
+    
+    st.markdown("### 📸 Más Recuerdos")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        try: st.image(f"{url_base}Familia%203.jpg", caption="Recuerdo 3", width=250)
+        except: st.info("📷 Familia 3.jpg no disponible")
+    with col2:
+        try: st.image(f"{url_base}Familia%204.jpg", caption="Recuerdo 4", width=250)
+        except: st.info("📷 Familia 4.jpg no disponible")
+    with col3:
+        try: st.image(f"{url_base}Familia%205.jpg", caption="Recuerdo 5", width=250)
+        except: st.info("📷 Familia 5.jpg no disponible")
+    
+    st.markdown("---")
+    try: st.image(f"{url_base}Familia%206.jpg", caption="Recuerdo familiar 6", width=350)
+    except: st.info("📷 Familia 6.jpg no disponible")
+    
+    st.markdown("---")
+    st.markdown("*Homenaje a Victoria Rodríguez de Guerra (1939-1991)*")
+
+
+# ═══════════════════════════════════════════════════════
+# FUNCIÓN DE MÚSICA
+# ═══════════════════════════════════════════════════════
+
+def mostrar_musica():
+    """Muestra la sección de música de fondo."""
+    st.markdown("## 🎵 Música de Fondo")
+    st.markdown("---")
+    
+    st.markdown("""
+    ### 🎸 Romance Anónimo (Romance de Amor)
+    
+    Esta hermosa y atemporal pieza de guitarra clásica acompaña la lectura de los poemas, 
+    evocando el amor eterno, la nostalgia y la serenidad presentes en *Prismas Líricos*.
+    
+    *💡 Tip: También puedes usar el reproductor flotante en la esquina inferior derecha 
+    para escuchar música mientras navegas por toda la aplicación.*
+    """)
+    
+    st.markdown("---")
+    
+    cancion_url = st.session_state.get('cancion_url', CANCIONES["Romance Anónimo - Gonza Nico"])
+    cancion_nombre = st.session_state.get('cancion_nombre', "Romance Anónimo - Gonza Nico")
+    
+    st.markdown(f"### 🎧 Reproduciendo: **{cancion_nombre}**")
+    
+    soundcloud_html = f"""
+    <iframe width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay; encrypted-media" src="{cancion_url}"></iframe>
+    """
+    
+    st.components.v1.html(soundcloud_html, height=350)
+    
+    st.markdown("---")
+    st.markdown("*\"La música es el lenguaje del espíritu. Abre el secreto de la vida, trayendo paz, abolida la discordia.\" - Kahlil Gibran*")
+
+
+# ═══════════════════════════════════════════════════════
+# FUNCIÓN DE INICIO
+# ═══════════════════════════════════════════════════════
+
+def mostrar_inicio(libro):
+    """Muestra la página de inicio con la imagen de peonías."""
+    
+    # Título principal
+    st.markdown("""
+    <div style="text-align: center; padding-top: 0.5em;">
+        <h1 style="font-family: 'Cormorant Garamond', serif; 
+                   font-size: 3.5em; 
+                   color: #4a2c17; 
+                   margin-bottom: 0.1em;
+                   font-weight: 600;
+                   letter-spacing: 0.05em;">
+            PRISMAS LÍRICOS
+        </h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Nombre del autor
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 1em;">
+        <p style="font-family: 'EB Garamond', serif; 
+                  font-size: 1.5em; 
+                  color: #6b4423; 
+                  font-style: italic;
+                  margin: 0;">
+            Jesús Ignacio Guerra Figueroa
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Imagen de peonías
+    col1, col2, col3 = st.columns([1.6, 2, 1])
+    with col2:
+        st.markdown('<div style="text-align: center;">', unsafe_allow_html=True)
+        st.image("Peonias.jpg", width=200)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Homenaje a Victoria
+    st.markdown("""
+    <div style="text-align: center; margin-top: 1em;">
+        <p style="font-family: 'EB Garamond', serif; 
+                  font-size: 1.2em; 
+                  color: #8b4513; 
+                  font-style: italic;
+                  margin: 0;">
+            Victoria Rodríguez de Guerra (1939-1991)
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Línea decorativa
+    st.markdown("""
+    <hr style="border: none; 
+               height: 1px; 
+               background: linear-gradient(to right, transparent, #8b6f47, transparent);
+               margin: 2em 0;">
+    """, unsafe_allow_html=True)
+    
+    # Contenido de bienvenida
+    st.markdown("## 🌹 Bienvenido a Prismas Líricos")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        try:
-            st.image(f"{url_base}Familia1.jpg", 
-                     caption="Recuerdo familiar 1",
-                     use_column_width=True)
-        except:
-            st.info("📷 Familia1.jpg no disponible")
+        st.markdown("""
+        ### Sobre la Obra
+        
+        **Prismas Líricos** es una obra poética escrita por **Jesús Ignacio Guerra Figueroa**, 
+        un homenaje póstumo a su esposa **Victoria Rodríguez de Guerra** (1939-1991).
+        
+        Esta segunda edición, publicada en 1996 en San Juan de Pasto, Nariño, 
+        recoge más de cinco décadas de creación poética (1939-1996), incluyendo:
+        
+        - 📖 Prosa filosófica sobre la vida, la muerte y la reencarnación
+        - 🌹 Más de 200 poemas líricos
+        - 👨‍👩‍👧‍👦 Versos de hijos y nietos
+        - 📜 El Álbum de Recuerdos de toda una vida de amor
+        - 🕊️ La Oración Fúnebre y los Cantos finales
+        """)
     
     with col2:
-        try:
-            st.image(f"{url_base}Familia2.jpg", 
-                     caption="Recuerdo familiar 2",
-                     use_column_width=True)
-        except:
-            st.info("📷 Familia2.jpg no disponible")
-    
-    st.markdown("---")
-    
-    # FOTOS FAMILIARES - SEGUNDA FILA
-    st.markdown("### 📸 Más Recuerdos")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        try:
-            st.image(f"{url_base}Familia%203.jpg", 
-                     caption="Recuerdo 3",
-                     use_column_width=True)
-        except:
-            st.info("📷 Familia 3.jpg no disponible")
-    
-    with col2:
-        try:
-            st.image(f"{url_base}Familia%204.jpg", 
-                     caption="Recuerdo 4",
-                     use_column_width=True)
-        except:
-            st.info("📷 Familia 4.jpg no disponible")
-    
-    with col3:
-        try:
-            st.image(f"{url_base}Familia%205.jpg", 
-                     caption="Recuerdo 5",
-                     use_column_width=True)
-        except:
-            st.info("📷 Familia 5.jpg no disponible")
-    
-    st.markdown("---")
-    
-    # FAMILIA 6
-    try:
-        st.image(f"{url_base}Familia%206.jpg", 
-                 caption="Recuerdo familiar 6",
-                 use_column_width=True)
-    except:
-        st.info("📷 Familia 6.jpg no disponible")
-    
-    st.markdown("---")
-    st.markdown("*Homenaje a Victoria Rodríguez de Guerra (1939-1991)*")
+        st.markdown("""
+        ### 🎙️ Lector de Voz
+        
+        Esta aplicación incluye un **lector de voz neuronal** que puede leer 
+        cualquier poema del libro en voz alta.
+        
+        **Características:**
+        - ✅ 6 voces en español de alta calidad
+        - ✅ Velocidad ajustable
+        - ✅ Entonación natural
+        - ✅ Descarga de audios MP3
+        - ✅ Descarga de poemas en PDF (formato del libro)
+        - ✅ Música de fondo (guitarra clásica)
+        - ✅ Formato de versos preservado
+        
+        **Cómo usar:**
+        1. Selecciona una voz en el menú lateral
+        2. Ajusta la velocidad de lectura
+        3. Navega a cualquier poema
+        4. Haz clic en "🔊 Generar y reproducir audio" o "📥 Generar PDF"
+        """)
+        
+        st.markdown("---")
+        st.markdown("### 💡 Consejo")
+        st.info("""
+        Para una experiencia óptima, te recomendamos:
+        - **Voz**: Helena (España - Femenina)
+        - **Velocidad**: -15% (poética)
+        - **Ambiente**: Lugar tranquilo para apreciar la poesía
+        """)
 
 
 # ═══════════════════════════════════════════════════════
@@ -308,7 +561,7 @@ def mostrar_galeria():
 # ═══════════════════════════════════════════════════════
 
 def mostrar_poema(poema):
-    """Muestra un poema individual con formato de versos y audio."""
+    """Muestra un poema individual con formato de versos, audio y PDF."""
     contenido_formateado = formatear_versos(poema['contenido'])
     
     st.markdown(f"""
@@ -321,7 +574,6 @@ def mostrar_poema(poema):
     </div>
     """, unsafe_allow_html=True)
     
-    # Sección de audio
     st.markdown("---")
     st.markdown("### 🎙️ Escuchar este poema")
     
@@ -356,60 +608,27 @@ def mostrar_poema(poema):
                     )
             else:
                 st.error("❌ No se pudo generar el audio")
-
-
-def mostrar_inicio(libro):
-    """Muestra la página de inicio."""
-    st.markdown("## 🌹 Bienvenido a Prismas Líricos")
     
-    col1, col2 = st.columns(2)
+    st.markdown("---")
+    st.markdown("### 📄 Descargar en PDF")
+    st.markdown("*Imprime este poema con el formato exacto del libro original.*")
     
-    with col1:
-        st.markdown("""
-        ### Sobre la Obra
-        
-        **Prismas Líricos** es una obra poética escrita por **Jesús Ignacio Guerra Figueroa**, 
-        un homenaje póstumo a su esposa **Victoria Rodríguez de Guerra** (1939-1991).
-        
-        Esta segunda edición, publicada en 1996 en San Juan de Pasto, Nariño, 
-        recoge más de cinco décadas de creación poética (1939-1996), incluyendo:
-        
-        - 📖 Prosa filosófica sobre la vida, la muerte y la reencarnación
-        - 🌹 Más de 200 poemas líricos
-        - 👨‍👩‍👧‍👦 Versos de hijos y nietos
-        - 📜 El Álbum de Recuerdos de toda una vida de amor
-        - 🕊️ La Oración Fúnebre y los Cantos finales
-        """)
-    
-    with col2:
-        st.markdown("""
-        ### 🎙️ Lector de Voz
-        
-        Esta aplicación incluye un **lector de voz neuronal** que puede leer 
-        cualquier poema del libro en voz alta.
-        
-        **Características:**
-        - ✅ 6 voces en español de alta calidad
-        - ✅ Velocidad ajustable
-        - ✅ Entonación natural
-        - ✅ Descarga de audios MP3
-        - ✅ Formato de versos preservado
-        
-        **Cómo usar:**
-        1. Selecciona una voz en el menú lateral
-        2. Ajusta la velocidad de lectura
-        3. Navega a cualquier poema
-        4. Haz clic en "🔊 Generar y reproducir audio"
-        """)
-        
-        st.markdown("---")
-        st.markdown("### 💡 Consejo")
-        st.info("""
-        Para una experiencia óptima, te recomendamos:
-        - **Voz**: Helena (España - Femenina)
-        - **Velocidad**: -15% (poética)
-        - **Ambiente**: Lugar tranquilo para apreciar la poesía
-        """)
+    if st.button("📥 Generar PDF del poema", key=f"pdf_{poema['titulo']}"):
+        with st.spinner("Generando PDF con formato del libro..."):
+            try:
+                archivo_pdf = generar_pdf_poema(poema)
+                
+                st.success("✅ PDF generado exitosamente con el formato del libro")
+                
+                with open(archivo_pdf, 'rb') as f:
+                    st.download_button(
+                        label="📥 Descargar PDF",
+                        data=f,
+                        file_name=f"{poema['titulo']}.pdf",
+                        mime="application/pdf"
+                    )
+            except Exception as e:
+                st.error(f"❌ Error al generar el PDF: {e}")
 
 
 def mostrar_busqueda(libro):
@@ -573,11 +792,67 @@ def mostrar_estadisticas(libro):
 
 
 # ═══════════════════════════════════════════════════════
+# FUNCIÓN DE DESCARGA DEL LIBRO COMPLETO (OCULTA)
+# ═══════════════════════════════════════════════════════
+
+def mostrar_descarga_libro():
+    """Permite descargar el libro completo en PDF (archivo pre-elaborado)."""
+    st.markdown("## 📖 Descargar Libro Completo")
+    st.markdown("---")
+    
+    st.markdown("""
+    ### Prismas Líricos - Obra Completa
+    
+    Descarga la obra completa de **Jesús Ignacio Guerra Figueroa** en formato PDF.
+    
+    **Contenido:**
+    - 📖 Más de 200 poemas con ortografía corregida
+    - 👨‍👩‍👧‍👦 Álbum de Recuerdos
+    - 🎵 Prólogos, epílogos y dedicatorias
+    - ✨ Formato idéntico al libro original
+    
+    **Edición:** Segunda Edición (1996)  
+    **San Juan de Pasto, Nariño, Colombia**
+    """)
+    
+    st.markdown("---")
+    
+    nombre_archivo = "Prismas_Liricos_Corregido.pdf"
+    
+    try:
+        with open(nombre_archivo, "rb") as pdf_file:
+            pdf_bytes = pdf_file.read()
+        
+        st.success("✅ El libro está disponible para descarga")
+        
+        st.download_button(
+            label="📥 Descargar Libro Completo (PDF)",
+            data=pdf_bytes,
+            file_name="Prismas_Liricos_Completo.pdf",
+            mime="application/pdf",
+            key="descargar_libro_completo_pdf"
+        )
+        
+        st.markdown("---")
+        st.markdown("*Homenaje a Victoria Rodríguez de Guerra (1939-1991)*")
+        
+    except FileNotFoundError:
+        st.warning("⚠️ El libro completo estará disponible próximamente.")
+        st.info("💡 El autor está preparando el PDF con el formato exacto del libro original y la ortografía corregida.")
+
+
+# ═══════════════════════════════════════════════════════
 # FUNCIÓN PRINCIPAL
 # ═══════════════════════════════════════════════════════
 
 def main():
     """Función principal de la aplicación."""
+    
+    # Inicializar sesión para la música
+    if 'cancion_url' not in st.session_state:
+        st.session_state.cancion_url = CANCIONES["Romance Anónimo - Gonza Nico"]
+        st.session_state.cancion_nombre = "Romance Anónimo - Gonza Nico"
+    
     # Cargar datos
     try:
         libro = cargar_libro()
@@ -586,24 +861,37 @@ def main():
         st.info("Asegúrate de que el archivo esté en el repositorio de GitHub.")
         return
     
-    # Portada
-    st.markdown('<div class="main-title">PRISMAS LÍRICOS</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">Jesús Ignacio Guerra Figueroa</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="homenaje">{libro.get("homenaje", "")}</div>', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
     # Sidebar
     with st.sidebar:
         st.markdown("## 📖 Navegación")
         
         modo = st.radio(
             "¿Cómo deseas explorar?",
-            ["🏠 Inicio", "🔍 Buscar", "📚 Por Sección", "🏷️ Por Tema", "📜 Todos los poemas", "📊 Estadísticas", "📸 Galería"],
+            ["🏠 Inicio", "🔍 Buscar", "📚 Por Sección", "🏷️ Por Tema", "📜 Todos los poemas", "📊 Estadísticas", "📸 Galería", "🎵 Música"],
             index=0
         )
         
         st.markdown("---")
+        
+        # Selector de música
+        st.markdown("### 🎵 Música de Fondo")
+        
+        cancion_elegida = st.selectbox(
+            "Elige una canción:",
+            list(CANCIONES.keys()),
+            index=0,
+            help="Selecciona la música que sonará de fondo"
+        )
+        
+        if cancion_elegida and CANCIONES[cancion_elegida]:
+            st.session_state.cancion_url = CANCIONES[cancion_elegida]
+            st.session_state.cancion_nombre = cancion_elegida
+        elif cancion_elegida and not CANCIONES[cancion_elegida]:
+            st.info(f"⏳ '{cancion_elegida}' estará disponible próximamente")
+        
+        st.markdown("---")
+        
+        # Configuración de Voz
         st.markdown("### 🎙️ Configuración de Voz")
         
         voz_seleccionada = st.selectbox(
@@ -649,23 +937,28 @@ def main():
     if modo == "🏠 Inicio":
         mostrar_inicio(libro)
     
-    elif modo == "🔍 Buscar":
-        mostrar_busqueda(libro)
+    else:
+        st.markdown('<div class="main-title">PRISMAS LÍRICOS</div>', unsafe_allow_html=True)
+        st.markdown('<div class="subtitle">Jesús Ignacio Guerra Figueroa</div>', unsafe_allow_html=True)
+        st.markdown("---")
+        
+        if modo == "🔍 Buscar":
+            mostrar_busqueda(libro)
+        elif modo == "📚 Por Sección":
+            mostrar_por_seccion(libro)
+        elif modo == "🏷️ Por Tema":
+            mostrar_por_tema(libro)
+        elif modo == "📜 Todos los poemas":
+            mostrar_todos(libro)
+        elif modo == "📊 Estadísticas":
+            mostrar_estadisticas(libro)
+        elif modo == "📸 Galería":
+            mostrar_galeria()
+        elif modo == "🎵 Música":
+            mostrar_musica()
     
-    elif modo == "📚 Por Sección":
-        mostrar_por_seccion(libro)
-    
-    elif modo == "🏷️ Por Tema":
-        mostrar_por_tema(libro)
-    
-    elif modo == "📜 Todos los poemas":
-        mostrar_todos(libro)
-    
-    elif modo == "📊 Estadísticas":
-        mostrar_estadisticas(libro)
-    
-    elif modo == "📸 Galería":
-        mostrar_galeria()
+    # Reproductor flotante (siempre visible)
+    reproductor_flotante()
 
 
 if __name__ == "__main__":
