@@ -127,6 +127,19 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
+    
+    /* Estilo para el reproductor flotante */
+    .floating-player {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: rgba(255, 253, 247, 0.97);
+        padding: 8px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border: 2px solid #8b6f47;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -146,24 +159,23 @@ CANCIONES = {
 
 
 # ═══════════════════════════════════════════════════════
-# REPRODUCTOR FLOTANTE
+# REPRODUCTOR FLOTANTE (VISIBLE)
 # ═══════════════════════════════════════════════════════
 
 def reproductor_flotante():
-    """Reproductor de música flotante en la esquina inferior derecha."""
+    """Reproductor de música flotante visible en la esquina inferior derecha."""
     cancion_url = st.session_state.get('cancion_url', CANCIONES["Romance Anónimo - Gonza Nico"])
     
     html_flotante = f"""
-    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 999; 
-                background: rgba(255, 253, 247, 0.97); padding: 10px; 
-                border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-                border: 2px solid #8b6f47;">
-        <iframe width="300" height="80" scrolling="no" frameborder="no" 
-                allow="autoplay" src="{cancion_url}">
+    <div class="floating-player">
+        <div style="font-size: 10px; color: #8b6f47; margin-bottom: 5px; font-weight: bold;">🎵 Música de Fondo</div>
+        <iframe width="280" height="60" scrolling="no" frameborder="no" 
+                allow="autoplay" 
+                src="{cancion_url}">
         </iframe>
     </div>
     """
-    st.components.v1.html(html_flotante, height=0)
+    st.components.v1.html(html_flotante, height=90)
 
 
 # ═══════════════════════════════════════════════════════
@@ -444,7 +456,7 @@ def mostrar_musica():
 # ═══════════════════════════════════════════════════════
 
 def mostrar_inicio(libro):
-    """Muestra la página de inicio con la imagen de peonías."""
+    """Muestra la página de inicio con la imagen de peonías centrada."""
     
     # Título principal
     st.markdown("""
@@ -473,11 +485,11 @@ def mostrar_inicio(libro):
     </div>
     """, unsafe_allow_html=True)
     
-    # Imagen de peonías
-    col1, col2, col3 = st.columns([1.6, 2, 1])
+    # Imagen centrada usando columnas
+    col1, col2, col3 = st.columns([1.5, 2, 1])
     with col2:
         st.markdown('<div style="text-align: center;">', unsafe_allow_html=True)
-        st.image("Peonias.jpg", width=200)
+        st.image("Peonias.jpg", width=280)
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Homenaje a Victoria
@@ -544,6 +556,7 @@ def mostrar_inicio(libro):
         2. Ajusta la velocidad de lectura
         3. Navega a cualquier poema
         4. Haz clic en "🔊 Generar y reproducir audio" o "📥 Generar PDF"
+        5. **La música de fondo sigue sonando mientras escuchas el poema**
         """)
         
         st.markdown("---")
@@ -553,6 +566,7 @@ def mostrar_inicio(libro):
         - **Voz**: Helena (España - Femenina)
         - **Velocidad**: -15% (poética)
         - **Ambiente**: Lugar tranquilo para apreciar la poesía
+        - **Música**: Activa el reproductor flotante para escuchar música mientras lees
         """)
 
 
@@ -576,6 +590,7 @@ def mostrar_poema(poema):
     
     st.markdown("---")
     st.markdown("### 🎙️ Escuchar este poema")
+    st.info("💡 **Tip:** La música de fondo seguirá sonando mientras escuchas el poema. Puedes pausarla desde el reproductor flotante si lo deseas.")
     
     texto_audio = f"{poema['titulo']}. "
     if poema.get('autor'):
@@ -858,7 +873,7 @@ def main():
         libro = cargar_libro()
     except FileNotFoundError:
         st.error("❌ No se encontró 'prismas_liricos_completo.json'")
-        st.info("Asegúrate de que el archivo esté en el repositorio de GitHub.")
+        st.info("Asegúrate de que el archivo esté en la misma carpeta que app.py")
         return
     
     # Sidebar
@@ -957,7 +972,9 @@ def main():
         elif modo == "🎵 Música":
             mostrar_musica()
     
-    # Reproductor flotante (siempre visible)
+    # ═══════════════════════════════════════════════════
+    # REPRODUCTOR FLOTANTE (SIEMPRE VISIBLE)
+    # ═══════════════════════════════════════════════════
     reproductor_flotante()
 
 
