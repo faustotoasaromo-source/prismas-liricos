@@ -8,6 +8,7 @@
 
 import json
 import os
+import glob
 import streamlit as st
 import re
 import asyncio
@@ -162,7 +163,6 @@ def generar_audio_poema(texto, voz="es-CO-SalomeNeural", rate="-15%", volumen="+
         
     archivo_mp3 = os.path.join(cache_dir, f"{hash_id}.mp3")
     
-    # Si ya existe en caché, lo retornamos inmediatamente (carga instantánea)
     if os.path.exists(archivo_mp3):
         return archivo_mp3
 
@@ -458,16 +458,18 @@ def mostrar_inicio(libro):
         - ✅ 7 piezas de música clásica de fondo
         - ✅ Más de 25 voces en español de alta calidad
         - ✅ Caché de audio inteligente (carga instantánea en audiciones repetidas)
+        - ✅ Grabaciones familiares personalizadas
         - ✅ Descarga de audios MP3 y poemas en PDF
         """)
 
 
 # ═══════════════════════════════════════════════════════
-# FUNCIONES DE VISUALIZACIÓN
+# FUNCIONES DE VISUALIZACIÓN (CON SOPORTE PARA AUDIO FAMILIAR)
 # ═══════════════════════════════════════════════════════
 
 def mostrar_poema(poema):
-    """Muestra un poema individual con audio, música y PDF en el orden correcto."""
+    """Muestra un poema individual. Prioriza la voz familiar si existe el MP3/MP4."""
+    
     contenido_formateado = formatear_versos(poema['contenido'])
     
     st.markdown(f"""
@@ -480,75 +482,104 @@ def mostrar_poema(poema):
     </div>
     """, unsafe_allow_html=True)
     
-    # 1. SECCIÓN DE AUDIO (VOZ)
+    # ═══════════════════════════════════════════════════════
+    # 1. SECCIÓN DE AUDIO (VOZ FAMILIAR O IA)
+    # ═══════════════════════════════════════════════════════
     st.markdown("---")
     st.markdown("### 🎙️ Escuchar este poema")
     
-    texto_audio = f"{poema['titulo']}. . . . "
-    texto_audio += limpiar_texto_para_audio(poema['contenido'])
+    # Buscar si existe un audio grabado por un familiar (insensible a mayúsculas y extensión)
+    carpeta_familiar = "audio_familiar"
+    titulo_poema = poema['titulo'].strip()
     
-    if poema.get('autor') or poema.get('año'):
-        texto_audio += " . . . . "
-        if poema.get('autor') and poema.get('año'):
-            texto_audio += f"Por {poema['autor']}, año {poema['año']}."
-        elif poema.get('autor'):
-            texto_audio += f"Por {poema['autor']}."
-        elif poema.get('año'):
-            texto_audio += f"Año {poema['año']}."
+    # Buscar archivos que coincidan con el título (ignorando mayúsculas y extensión)
+    archivo_familiar = None
+    if os.path.exists(carpeta_familiar):
+        for extension in ['*.mp3', '*.mp4', '*.wav', '*.m4a']:
+            patron = os.path.join(carpeta_familiar, extension)
+            archivos = glob.glob(patron)
+            for archivo in archivos:
+                nombre_sin_ext = os.path.splitext(os.path.basename(archivo))[0]
+                if nombre_sin_ext.lower() == titulo_poema.lower():
+                    archivo_familiar = archivo
+                    break
+            if archivo_familiar:
+                break
     
-    if st.button("🔊 Generar y reproducir audio", key=f"audio_{poema['titulo']}"):
-        voz_id = st.session_state.get('voz_id', 'es-CO-SalomeNeural')
-        velocidad = st.session_state.get('velocidad', '-15%')
-        volumen_voz = st.session_state.get('volumen_voz', '+0%')
+    if archivo_familiar:
+        # ✅ Si existe el audio familiar, lo reproducimos
+        nombre_archivo = os.path.basename(archivo_familiar)
+        st.markdown(f"🎧 **Voz de un familiar:** {poema['titulo']}")
+        st.info(f"Reproduciendo grabación personalizada: `{nombre_archivo}`")
         
-        archivo = generar_audio_poema(texto_audio, voz_id, velocidad, volumen_voz)
+        st.markdown('<div class="audio-container">', unsafe_allow_html=True)
+        st.audio(archivo_familiar)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        if archivo:
-            st.success("✅ Audio listo")
-            st.markdown('<div class="audio-container">', unsafe_allow_html=True)
-            st.audio(archivo, format='audio/mp3')
-            st.markdown('</div>', unsafe_allow_html=True)
+        with open(archivo_familiar, 'rb') as f:
+            st.download_button(
+                label=f"💾 Descargar {nombre_archivo}",
+                data=f,
+                file_name=nombre_archivo,
+                mime="audio/mpeg"
+            )
+    else:
+        # 🤖 Si NO existe, usamos la voz de la IA (Salomé)
+        st.markdown("🤖 **Voz Neuronal (IA):** Seleccionada en el menú lateral")
+        st.info(f"No se encontró audio familiar para '{titulo_poema}'. Se usará la voz de la IA.")
+        
+        texto_audio = f"{poema['titulo']}. . . . "
+        texto_audio += limpiar_texto_para_audio(poema['contenido'])
+        
+        if poema.get('autor') or poema.get('año'):
+            texto_audio += " . . . . "
+            if poema.get('autor') and poema.get('año'):
+                texto_audio += f"Por {poema['autor']}, año {poema['año']}."
+            elif poema.get('autor'):
+                texto_audio += f"Por {poema['autor']}."
+            elif poema.get('año'):
+                texto_audio += f"Año {poema['año']}."
+        
+        if st.button("🔊 Generar audio con voz neuronal", key=f"audio_{poema['titulo']}"):
+            voz_id = st.session_state.get('voz_id', 'es-CO-SalomeNeural')
+            velocidad = st.session_state.get('velocidad', '-15%')
+            volumen_voz = st.session_state.get('volumen_voz', '+0%')
             
-            with open(archivo, 'rb') as f:
-                st.download_button(
-                    label="💾 Descargar MP3",
-                    data=f,
-                    file_name=f"{poema['titulo']}.mp3",
-                    mime="audio/mpeg"
-                )
-    
+            archivo = generar_audio_poema(texto_audio, voz_id, velocidad, volumen_voz)
+            
+            if archivo:
+                st.success("✅ Audio generado")
+                st.markdown('<div class="audio-container">', unsafe_allow_html=True)
+                st.audio(archivo, format='audio/mp3')
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                with open(archivo, 'rb') as f:
+                    st.download_button(
+                        label="💾 Descargar MP3 (Voz IA)",
+                        data=f,
+                        file_name=f"{poema['titulo']}_IA.mp3",
+                        mime="audio/mpeg"
+                    )
+
     # 2. SECCIÓN DE MÚSICA
     st.markdown("---")
     st.markdown("### 🎵 Música de Fondo")
-    
     cancion_url = st.session_state.get('cancion_url', CANCIONES["Romance Anónimo - Gonza Nico"])
     cancion_nombre = st.session_state.get('cancion_nombre', "Romance Anónimo - Gonza Nico")
-    
     st.markdown(f"**Canción actual:** {cancion_nombre}")
-    
-    soundcloud_html = f"""
-    <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="{cancion_url}"></iframe>
-    """
-    
+    soundcloud_html = f'<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="{cancion_url}"></iframe>'
     st.components.v1.html(soundcloud_html, height=200)
 
     # 3. SECCIÓN DE PDF
     st.markdown("---")
     st.markdown("### 📄 Descargar en PDF")
-    st.markdown("*Imprime este poema con el formato exacto del libro original.*")
-    
     if st.button("📥 Generar PDF del poema", key=f"pdf_{poema['titulo']}"):
         with st.spinner("Generando PDF..."):
             try:
                 archivo_pdf = generar_pdf_poema(poema)
                 st.success("✅ PDF generado")
                 with open(archivo_pdf, 'rb') as f:
-                    st.download_button(
-                        label="📥 Descargar PDF",
-                        data=f,
-                        file_name=f"{poema['titulo']}.pdf",
-                        mime="application/pdf"
-                    )
+                    st.download_button("📥 Descargar PDF", f, f"{poema['titulo']}.pdf", "application/pdf")
             except Exception as e:
                 st.error(f"❌ Error: {e}")
 
@@ -628,7 +659,6 @@ def main():
         st.session_state.cancion_url = CANCIONES["Romance Anónimo - Gonza Nico"]
         st.session_state.cancion_nombre = "Romance Anónimo - Gonza Nico"
     
-    # Inicialización de valores por defecto de la voz (Salomé)
     if 'voz_id' not in st.session_state:
         st.session_state.voz_id = "es-CO-SalomeNeural"
     if 'velocidad' not in st.session_state:
@@ -657,11 +687,9 @@ def main():
         st.markdown("### 🎙️ Voz Lector")
         
         voces_map = {
-            # España
             "🇪🇸 Helena (España - Femenina)": "es-ES-HelenaNeural",
             "🇪🇸 Álvaro (España - Masculino)": "es-ES-AlvaroNeural",
             "🇪🇸 Elvira (España - Femenina)": "es-ES-ElviraNeural",
-            # México
             "🇲🇽 Dalia (México - Femenina)": "es-MX-DaliaNeural",
             "🇲🇽 Jorge (México - Masculino)": "es-MX-JorgeNeural",
             "🇲🇽 Lupe (México - Femenina)": "es-MX-LupeNeural",
@@ -673,48 +701,35 @@ def main():
             "🇲🇽 Liberto (México - Masculino)": "es-MX-LibertoNeural",
             "🇲🇽 Pelayo (México - Masculino)": "es-MX-PelayoNeural",
             "🇲🇽 Yago (México - Masculino)": "es-MX-YagoNeural",
-            # Colombia
             "🇨🇴 Salomé (Colombia - Femenina)": "es-CO-SalomeNeural",
             "🇨🇴 Gonzalo (Colombia - Masculino)": "es-CO-GonzaloNeural",
-            # Argentina
             "🇦🇷 Elena (Argentina - Femenina)": "es-AR-ElenaNeural",
             "🇦🇷 Tomás (Argentina - Masculino)": "es-AR-TomasNeural",
-            # Chile
             "🇨🇱 Catalina (Chile - Femenina)": "es-CL-CatalinaNeural",
             "🇨🇱 Lorenzo (Chile - Masculino)": "es-CL-LorenzoNeural",
-            # Estados Unidos (Hispano)
             "🇺🇸 Paloma (EE.UU. - Femenina)": "es-US-PalomaNeural",
             "🇺🇸 Alonso (EE.UU. - Masculino)": "es-US-AlonsoNeural",
-            # Venezuela
             "🇻🇪 Paola (Venezuela - Femenina)": "es-VE-PaolaNeural",
             "🇻🇪 Sebastián (Venezuela - Masculino)": "es-VE-SebastianNeural",
-            # Perú
             "🇵🇪 Camila (Perú - Femenina)": "es-PE-CamilaNeural",
             "🇵🇪 Alex (Perú - Masculino)": "es-PE-AlexNeural",
-            # Ecuador
             "🇪🇨 Andrea (Ecuador - Femenina)": "es-EC-AndreaNeural",
             "🇪🇨 Luis (Ecuador - Masculino)": "es-EC-LuisNeural",
-            # Bolivia
             "🇧🇴 Marcelo (Bolivia - Masculino)": "es-BO-MarceloNeural",
             "🇧🇴 Sofia (Bolivia - Femenina)": "es-BO-SofiaNeural",
-            # Uruguay
             "🇺🇾 Mateo (Uruguay - Masculino)": "es-UY-MateoNeural",
             "🇺🇾 Valentina (Uruguay - Femenina)": "es-UY-ValentinaNeural",
-            # Costa Rica
             "🇨🇷 María (Costa Rica - Femenina)": "es-CR-MariaNeural",
             "🇨🇷 Juan (Costa Rica - Masculino)": "es-CR-JuanNeural",
-            # Puerto Rico
             "🇵🇷 Karina (Puerto Rico - Femenina)": "es-PR-KarinaNeural",
             "🇵🇷 Víctor (Puerto Rico - Masculino)": "es-PR-VictorNeural",
-            # República Dominicana
             "🇩🇴 Ramona (Rep. Dominicana - Femenina)": "es-DO-RamonaNeural",
             "🇩🇴 Emilio (Rep. Dominicana - Masculino)": "es-DO-EmilioNeural",
-            # Guatemala
             "🇬🇹 Marta (Guatemala - Femenina)": "es-GT-MartaNeural",
             "🇬🇹 Andrés (Guatemala - Masculino)": "es-GT-AndresNeural"
         }
         
-        # ✅ Búsqueda dinámica del índice de Salomé (robusto ante reordenamientos)
+        # Búsqueda dinámica del índice de Salomé
         opciones_voces = list(voces_map.keys())
         indice_por_defecto = opciones_voces.index("🇨🇴 Salomé (Colombia - Femenina)") if "🇨🇴 Salomé (Colombia - Femenina)" in opciones_voces else 0
         
